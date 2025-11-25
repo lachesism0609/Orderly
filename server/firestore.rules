@@ -1,0 +1,125 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    function isAdmin() {
+      return isAuthenticated() && 
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+    
+    function isRestaurantOwner(restaurantId) {
+      return isAuthenticated() && 
+             get(/databases/$(database)/documents/restaurants/$(restaurantId)).data.ownerId == request.auth.uid;
+    }
+    
+    // Users Collection
+    match /users/{userId} {
+      // 用户可以读取自己的信息，管理员可以读取所有用户
+      allow read: if isOwner(userId) || isAdmin();
+      
+      // 用户可以创建自己的账户
+      allow create: if isAuthenticated() && 
+                      request.auth.uid == userId &&
+                      request.resource.data.uid == userId;
+      
+      // 用户可以更新自己的信息
+      allow update: if isOwner(userId) || isAdmin();
+      
+      // 只有管理员可以删除用户
+      allow delete: if isAdmin();
+    }
+    
+    // Restaurants Collection
+    match /restaurants/{restaurantId} {
+      // 所有人都可以读取商家信息
+      allow read: if true;
+      
+      // 只有管理员可以创建商家
+      allow create: if isAdmin();
+      
+      // 商家所有者或管理员可以更新商家信息
+      allow update: if isRestaurantOwner(restaurantId) || isAdmin();
+      
+      // 只有管理员可以删除商家
+      allow delete: if isAdmin();
+    }
+    
+    // Menu Items Collection
+    match /menuItems/{itemId} {
+      // 所有人都可以读取菜单项
+      allow read: if true;
+      
+      // 商家所有者或管理员可以创建菜单项
+      allow create: if isAuthenticated() && 
+                      (isRestaurantOwner(request.resource.data.restaurantId) || isAdmin());
+      
+      // 商家所有者或管理员可以更新菜单项
+      allow update: if isAuthenticated() && 
+                      (isRestaurantOwner(resource.data.restaurantId) || isAdmin());
+      
+      // 商家所有者或管理员可以删除菜单项
+      allow delete: if isAuthenticated() && 
+                      (isRestaurantOwner(resource.data.restaurantId) || isAdmin());
+    }
+    
+    // Orders Collection
+    match /orders/{orderId} {
+      // 订单的客户、商家所有者或管理员可以读取
+      allow read: if isAuthenticated() && 
+                    (isOwner(resource.data.customerId) || 
+                     isRestaurantOwner(resource.data.restaurantId) || 
+                     isAdmin());
+      
+      // 已认证用户可以创建订单
+      allow create: if isAuthenticated() && 
+                      request.auth.uid == request.resource.data.customerId;
+      
+      // 订单的客户（只能取消）、商家所有者（更新状态）或管理员可以更新
+      allow update: if isAuthenticated() && 
+                      (isOwner(resource.data.customerId) || 
+                       isRestaurantOwner(resource.data.restaurantId) || 
+                       isAdmin());
+      
+      // 只有管理员可以删除订单
+      allow delete: if isAdmin();
+    }
+    
+    // Reviews Collection
+    match /reviews/{reviewId} {
+      // 所有人都可以读取评价（未隐藏的）
+      allow read: if true;
+      
+      // 已认证用户可以创建评价（必须是自己的订单）
+      allow create: if isAuthenticated() && 
+                      request.auth.uid == request.resource.data.customerId;
+      
+      // 评价的作者或商家所有者（只能回复）或管理员可以更新
+      allow update: if isAuthenticated() && 
+                      (isOwner(resource.data.customerId) || 
+                       isRestaurantOwner(resource.data.restaurantId) || 
+                       isAdmin());
+      
+      // 评价的作者或管理员可以删除
+      allow delete: if isAuthenticated() && 
+                      (isOwner(resource.data.customerId) || isAdmin());
+    }
+    
+    // Categories Collection
+    match /categories/{categoryId} {
+      // 所有人都可以读取分类
+      allow read: if true;
+      
+      // 只有管理员可以创建、更新、删除分类
+      allow create, update, delete: if isAdmin();
+    }
+  }
+}
