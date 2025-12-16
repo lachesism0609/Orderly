@@ -21,7 +21,7 @@ const initializeFirebase = () => {
             });
             console.log('✅ Firebase Admin initialized with service account key file');
         } catch (fileError) {
-            // Option 2: Using environment variables (recommended for production)
+            // Option 2: Using environment variables (JSON string)
             if (process.env.FIREBASE_SERVICE_ACCOUNT) {
                 const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
                 admin.initializeApp({
@@ -29,8 +29,17 @@ const initializeFirebase = () => {
                     projectId: process.env.FIREBASE_PROJECT_ID
                 });
                 console.log('✅ Firebase Admin initialized with environment variable');
-            } else if (process.env.FIREBASE_PROJECT_ID) {
-                // Option 3: Using Application Default Credentials
+            }
+            // Option 3: Using Google Application Credentials (File path)
+            else if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
+                admin.initializeApp({
+                    credential: admin.credential.applicationDefault(),
+                    projectId: process.env.FIREBASE_PROJECT_ID
+                });
+                console.log('✅ Firebase Admin initialized with GOOGLE_APPLICATION_CREDENTIALS');
+            }
+            // Option 4: Fallback to default (e.g. GCP environment)
+            else if (process.env.FIREBASE_PROJECT_ID) {
                 admin.initializeApp({
                     credential: admin.credential.applicationDefault(),
                     projectId: process.env.FIREBASE_PROJECT_ID

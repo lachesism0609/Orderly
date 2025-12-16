@@ -57,7 +57,7 @@ function MerchantOrders() {
         : orders.filter(order => order.status === filterStatus);
 
     const formatPrice = (price) => {
-        return `¥${parseFloat(price).toFixed(2)}`;
+        return `€${parseFloat(price).toFixed(2)}`;
     };
 
     const formatDateTime = (timestamp) => {

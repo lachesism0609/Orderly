@@ -104,7 +104,7 @@ function MerchantDashboard() {
                             </div>
                             <div className="ml-5">
                                 <p className="text-sm font-medium text-gray-500">{t('merchant.dashboard.totalRevenue')}</p>
-                                <p className="text-2xl font-semibold text-gray-900">¥{stats.totalRevenue.toFixed(2)}</p>
+                                <p className="text-2xl font-semibold text-gray-900">€{stats.totalRevenue.toFixed(2)}</p>
                             </div>
                         </div>
                     </div>

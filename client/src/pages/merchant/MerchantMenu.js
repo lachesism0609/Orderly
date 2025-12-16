@@ -144,7 +144,7 @@ function MerchantMenu() {
                                     </div>
                                     <p className="text-gray-600 text-sm mb-2">{item.description}</p>
                                     <div className="flex justify-between items-center mb-4">
-                                        <span className="text-orange-500 font-bold text-xl">¥{item.price}</span>
+                                        <span className="text-orange-500 font-bold text-xl">€{item.price}</span>
                                         <span className="text-gray-500 text-sm">{item.category}</span>
                                     </div>
                                     <div className="flex gap-2">
